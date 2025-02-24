@@ -23,6 +23,7 @@
                 </div>
 
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2">Send</button>
+                <p v-if="successMessage" class="text-green-600 mt-2">{{ successMessage }}</p>
             </form>
         </main>
         <Footer />
@@ -30,28 +31,65 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email as emailValidator } from '@vuelidate/validators';
 import Header from '@/components/Header.vue';
 import Footer from '@/components/Footer.vue';
 
-const name = ref('');
-const userEmail = ref(''); 
-const message = ref('');
+// Load API URL from .env
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const name = ref('');
+const userEmail = ref('');
+const message = ref('');
+const csrfToken = ref('');
+const successMessage = ref('');
+
+// Validation rules
 const rules = {
     name: { required },
-    userEmail: { required, email: emailValidator }, 
+    userEmail: { required, email: emailValidator },
     message: { required },
 };
-
 const v$ = useVuelidate(rules, { name, userEmail, message });
 
-const submitForm = () => {
+// Fetch CSRF Token
+onMounted(async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/csrf-token`, { withCredentials: true });
+        csrfToken.value = response.data.csrf_token;
+    } catch (error) {
+        console.error('Error fetching CSRF token:', error);
+    }
+});
+
+// Submit Contact Form
+const submitForm = async () => {
     v$.value.$validate();
     if (!v$.value.$error) {
-        alert('Form submitted successfully!');
+        try {
+            await axios.post(
+                `${API_BASE_URL}/contact`,
+                {
+                    name: name.value,
+                    email: userEmail.value,
+                    message: message.value,
+                },
+                {
+                    headers: { 'X-CSRF-TOKEN': csrfToken.value },
+                    withCredentials: true, // Ensures cookies are sent
+                }
+            );
+            successMessage.value = 'Your message has been sent!';
+            name.value = '';
+            userEmail.value = '';
+            message.value = '';
+            v$.value.$reset();
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        }
     }
 };
 </script>
