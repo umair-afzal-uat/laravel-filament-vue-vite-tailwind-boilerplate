@@ -13,7 +13,7 @@ class ContactQueryResource extends Resource
 {
     protected static ?string $model = ContactQuery::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
     protected static ?string $navigationLabel = 'Contact Queries';
     protected static ?string $pluralModelLabel = 'Contact Queries';
     protected static ?string $slug = 'contact-queries';
@@ -86,4 +86,5 @@ class ContactQueryResource extends Resource
             
         ];
     }
+    
 }
